@@ -19,16 +19,36 @@ db.init_app(app)
 def clear_session():
     session['page_views'] = 0
     return {'message': '200: Successfully cleared session data.'}, 200
+    
 
 @app.route('/articles')
 def index_articles():
+    
+    articles = Article.query.all()
 
-    pass
+    response = [article.to_dict() for article in articles]
+    
+    return jsonify(response), 200
+    
 
-@app.route('/articles/<int:id>')
+@app.route('/articles/<int:id>', methods=["GET"])
 def show_article(id):
 
-    pass
+    # Initialize session['page_views']
+    session["page_views"] = session.get("page_views", 0)
+    # Increment the page view count for this request
+    session["page_views"] += 1
+
+    if session["page_views"] <= 3:
+        article = Article.query.filter_by(id=id).first()
+        response = article.to_dict()
+        
+        return jsonify(response), 200
+
+    if session["page_views"] > 3:
+        # User has exceeded the maximum page view limit
+        return jsonify({'message': 'Maximum pageview limit reached'}), 401
+
 
 if __name__ == '__main__':
     app.run(port=5555)
